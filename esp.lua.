@@ -1,0 +1,40 @@
+# Gemini-Esp
+local Players = game:GetService("Players")
+
+local function applyHighlight(character, player)
+	-- Esperamos a que el personaje cargue completamente
+	task.wait(0.5)
+	
+	-- REGLA: Si el personaje es el tuyo (o del dueño del script), no poner ESP
+	-- Nota: En un script de servidor, esto se aplica comparando cada jugador.
+	-- Si quieres que NADIE vea su propio ESP, lo ideal es manejar la visibilidad 
+	-- desde un LocalScript, pero aquí lo configuraremos para que sea general.
+	
+	local highlight = character:FindFirstChild("ESPHighlight") or Instance.new("Highlight")
+	highlight.Name = "ESPHighlight"
+	
+	-- Configuración visual: Blanco y elegante
+	highlight.FillColor = Color3.new(1, 1, 1)      -- Blanco
+	highlight.FillTransparency = 0.8               -- Muy transparente para que no estorbe
+	highlight.OutlineColor = Color3.new(1, 1, 1)   -- Contorno Blanco
+	highlight.OutlineTransparency = 0              -- Contorno sólido para que se vea delgado pero claro
+	
+	highlight.Parent = character
+end
+
+local function onPlayerAdded(player)
+	player.CharacterAdded:Connect(function(character)
+		applyHighlight(character, player)
+	end)
+	
+	if player.Character then
+		applyHighlight(player.Character, player)
+	end
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+for _, player in pairs(Players:GetPlayers()) do
+	onPlayerAdded(player)
+end
+
