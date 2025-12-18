@@ -1,4 +1,4 @@
-# Gemini-Esp
+Gemini-Esp
 local Players = game:GetService("Players")
 
 local function applyHighlight(character, player)
