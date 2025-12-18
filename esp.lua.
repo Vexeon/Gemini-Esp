@@ -1,35 +1,58 @@
--- Gemini-Esp
+-- Gemini-Esp Pro Edition
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
-local function applyHighlight(character)
-    -- REGLA: No ponerle el ESP al jugador que usa el script
-    if character.Name == LocalPlayer.Name then return end
+-- CONFIGURACIÓN
+local MAX_DISTANCE = 1000 -- Distancia máxima en studs para ver el ESP
+local FILL_TRANS = 0.9    -- Casi invisible por dentro para que el borde se vea más fino
+local OUTLINE_TRANS = 0.1 -- Contorno casi sólido
 
-    task.wait(0.5)
+local function applyESP(character)
+    if character == LocalPlayer.Character then return end
     
+    -- Eliminamos task.wait(0.5) para que la carga sea instantánea
     local highlight = character:FindFirstChild("ESPHighlight") or Instance.new("Highlight")
     highlight.Name = "ESPHighlight"
-    highlight.FillColor = Color3.new(1, 1, 1)      -- Blanco
-    highlight.FillTransparency = 0.8               -- Relleno muy transparente
-    highlight.OutlineColor = Color3.new(1, 1, 1)   -- Contorno Blanco
-    highlight.OutlineTransparency = 0              -- Contorno visible
+    highlight.FillColor = Color3.new(1, 1, 1)
+    highlight.FillTransparency = FILL_TRANS
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.OutlineTransparency = OUTLINE_TRANS
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Parent = character
+    return highlight
 end
 
-local function onPlayerAdded(player)
-    player.CharacterAdded:Connect(applyHighlight)
-    if player.Character then applyHighlight(player.Character) end
-end
+-- Función de optimización por distancia
+RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local highlight = player.Character:FindFirstChild("ESPHighlight")
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            if highlight and hrp and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                
+                -- Se desactiva automáticamente si está muy lejos para no consumir recursos
+                if distance > MAX_DISTANCE then
+                    highlight.Enabled = false
+                else
+                    highlight.Enabled = true
+                end
+            end
+        end
+    end
+end)
 
-Players.PlayerAdded:Connect(onPlayerAdded)
+-- Ejecución instantánea para jugadores actuales
 for _, player in pairs(Players:GetPlayers()) do
-    onPlayerAdded(player)
+    if player.Character then applyESP(player.Character) end
+    player.CharacterAdded:Connect(applyESP)
 end
 
-print("ESP Gemini cargado correctamente")
-for _, player in pairs(Players:GetPlayers()) do
-	onPlayerAdded(player)
-end
+-- Conexión para nuevos jugadores
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(applyESP)
+end)
 
+print("ESP Pro Cargado: Instantáneo + Optimizado")
